@@ -937,8 +937,8 @@ bool CoarseTracker::trackNewestCoarse(
 }
 
 
-
-void CoarseTracker::debugPlotIDepthMap(float* minID_pt, float* maxID_pt, std::vector<IOWrap::Output3DWrapper*> &wraps)
+// JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+void CoarseTracker::debugPlotIDepthMap(FrameHessian *fh, float* minID_pt, float* maxID_pt, std::vector<IOWrap::Output3DWrapper*> &wraps)
 {
     if(w[1] == 0) return;
 
@@ -1026,6 +1026,8 @@ void CoarseTracker::debugPlotIDepthMap(float* minID_pt, float* maxID_pt, std::ve
         for(IOWrap::Output3DWrapper* ow : wraps)
             ow->pushDepthImage(&mf);
 
+        reportKeyframeTime(fh);
+
 		if(debugSaveImages)
 		{
 			char buf[1000];
@@ -1036,7 +1038,22 @@ void CoarseTracker::debugPlotIDepthMap(float* minID_pt, float* maxID_pt, std::ve
 	}
 }
 
+void CoarseTracker::reportKeyframeTime(FrameHessian *fh) {
+    boost::unique_lock<boost::mutex> lk(mappingTimingMutex);
 
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    lastNMappingMs.push_back(
+            ((time_now.tv_sec - last_map.tv_sec) * 1000.0f + (time_now.tv_usec - last_map.tv_usec) / 1000.0f));
+    if (lastNMappingMs.size() > 10) lastNMappingMs.pop_front();
+    last_map = time_now;
+
+    std::string filename("SDSO_keyframe_time_ms.txt");
+    std::fstream file;
+    file.open(filename, std::ios_base::app | std::ios_base::in);
+    if (file.is_open())
+        file << fh->shell->incoming_id << " | " << lastNMappingMs.back() << std::endl;
+}
 
 void CoarseTracker::debugPlotIDepthMapFloat(std::vector<IOWrap::Output3DWrapper*> &wraps)
 {

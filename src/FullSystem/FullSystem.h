@@ -306,6 +306,7 @@ private:
 	void makeNonKeyFrame( FrameHessian* fh, FrameHessian* fh_right);
 	void deliverTrackedFrame(FrameHessian* fh, FrameHessian* fh_right, bool needKF);
 	void mappingLoop();
+    void reportTrackingTime(FrameHessian *fh);
 
 	// tracking / mapping synchronization. All protected by [trackMapSyncMutex].
 	boost::mutex trackMapSyncMutex;
@@ -319,6 +320,11 @@ private:
 	bool needToKetchupMapping;
 
 	int lastRefStopID;
+
+    // timings
+    struct timeval last_track;
+    std::deque<float> lastNTrackingMs;
+    boost::mutex trackingTimingMutex;
 };
 }
 

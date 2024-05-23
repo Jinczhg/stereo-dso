@@ -55,7 +55,7 @@
 #include "util/ImageAndExposure.h"
 
 #include <cmath>
-#include <cv.h>
+#include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -1161,6 +1161,8 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 
 		}
 
+        reportTrackingTime(fh);
+
         for(IOWrap::Output3DWrapper* ow : outputWrapper)
            ow->publishCamPose(fh->shell, &Hcalib);
 
@@ -1169,6 +1171,23 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 		return;
 	}
 }
+
+void FullSystem::reportTrackingTime(FrameHessian *fh) {
+    boost::unique_lock<boost::mutex> lk(trackingTimingMutex);
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    lastNTrackingMs.push_back(((time_now.tv_sec - last_track.tv_sec) * 1000.0f + (time_now.tv_usec - last_track.tv_usec) / 1000.0f));
+
+    if (lastNTrackingMs.size() > 10) lastNTrackingMs.pop_front();
+    last_track = time_now;
+
+    std::string filename("SDSO_tracking_time_ms.txt");
+    std::fstream file;
+    file.open(filename, std::ios_base::app | std::ios_base::in);
+    if (file.is_open())
+        file <<  fh->shell->incoming_id << " | " << lastNTrackingMs.back() << std::endl;
+}
+
 
 void FullSystem::deliverTrackedFrame(FrameHessian* fh, FrameHessian* fh_right, bool needKF)
 {
@@ -1407,8 +1426,9 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
 		boost::unique_lock<boost::mutex> crlock(coarseTrackerSwapMutex);
 		coarseTracker_forNewKF->makeK(&Hcalib);
 		coarseTracker_forNewKF->setCoarseTrackingRef(frameHessians, fh_right, Hcalib);
-		
-		coarseTracker_forNewKF->debugPlotIDepthMap(&minIdJetVisTracker, &maxIdJetVisTracker, outputWrapper);
+
+        // JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+		coarseTracker_forNewKF->debugPlotIDepthMap(fh, &minIdJetVisTracker, &maxIdJetVisTracker, outputWrapper);
         coarseTracker_forNewKF->debugPlotIDepthMapFloat(outputWrapper);
 	}
 

@@ -270,15 +270,16 @@ bool CoarseInitializer::trackFrame(FrameHessian* newFrameHessian, FrameHessian* 
 		snappedAt = frameID;
 
 
-
-    debugPlot(0,wraps);
+    // JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+    debugPlot(0, wraps, newFrameHessian);
 
 
 
 	return snapped && frameID > snappedAt+1;
 }
 
-void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*> &wraps)
+// JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*> &wraps, FrameHessian *fh)
 {
     bool needCall = false;
     for(IOWrap::Output3DWrapper* ow : wraps)
@@ -326,6 +327,25 @@ void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*>
 	//IOWrap::displayImage("idepth-R", &iRImg, false);
     for(IOWrap::Output3DWrapper* ow : wraps)
         ow->pushDepthImage(&iRImg);
+
+    reportKeyframeTime(fh);
+}
+
+void CoarseInitializer::reportKeyframeTime(FrameHessian *fh) {
+    boost::unique_lock<boost::mutex> lk(mappingTimingMutex);
+
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    lastNMappingMs.push_back(
+            ((time_now.tv_sec - last_map.tv_sec) * 1000.0f + (time_now.tv_usec - last_map.tv_usec) / 1000.0f));
+    if (lastNMappingMs.size() > 10) lastNMappingMs.pop_front();
+    last_map = time_now;
+
+    std::string filename("SDSO_keyframe_time_ms.txt");
+    std::fstream file;
+    file.open(filename, std::ios_base::app | std::ios_base::in);
+    if (file.is_open())
+        file << fh->shell->incoming_id << " | " << lastNMappingMs.back() << std::endl;
 }
 
 // calculates residual, Hessian and Hessian-block neede for re-substituting depth.

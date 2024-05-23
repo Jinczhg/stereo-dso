@@ -51,8 +51,8 @@
 #include "IOWrapper/Pangolin/PangolinDSOViewer.h"
 #include "IOWrapper/OutputWrapper/SampleOutputWrapper.h"
 
-#include <opencv/cv.hpp>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 
 std::string vignette = "";
@@ -117,10 +117,10 @@ void settingsDefault(int preset)
         setting_maxOptIterations=6;
         setting_minOptIterations=1;
 
-        setting_kfGlobalWeight=0.3;   // original is 1.0. 0.3 is a balance between speed and accuracy. if tracking lost, set this para higher
-        setting_maxShiftWeightT= 0.04f * (640 + 128);   // original is 0.04f * (640+480); this para is depend on the crop size.
-        setting_maxShiftWeightR= 0.04f * (640 + 128);    // original is 0.0f * (640+480);
-        setting_maxShiftWeightRT= 0.02f * (640 + 128);  // original is 0.02f * (640+480);
+//        setting_kfGlobalWeight=0.3;   // original is 1.0. 0.3 is a balance between speed and accuracy. if tracking lost, set this para higher
+//        setting_maxShiftWeightT= 0.04f * (640 + 128);   // original is 0.04f * (640+480); this para is depend on the crop size.
+//        setting_maxShiftWeightR= 0.04f * (640 + 128);    // original is 0.0f * (640+480);
+//        setting_maxShiftWeightRT= 0.02f * (640 + 128);  // original is 0.02f * (640+480);
 
 		setting_logStuff = false;
 	}
@@ -135,7 +135,7 @@ void settingsDefault(int preset)
 				"- 424 x 320 image resolution\n", preset==0 ? "no " : "5x");
 
 		playbackSpeed = (preset==2 ? 0 : 5);
-		preload = preset==3;
+//		preload = preset==3;
 		setting_desiredImmatureDensity = 600;
 		setting_desiredPointDensity = 800;
 		setting_minFrames = 4;
@@ -414,6 +414,7 @@ int main( int argc, char** argv )
                 double tsThis = reader->getTimestamp(idsToPlay[idsToPlay.size()-1]);
                 double tsPrev = reader->getTimestamp(idsToPlay[idsToPlay.size()-2]);
                 timesToPlayAt.push_back(timesToPlayAt.back() +  fabs(tsThis-tsPrev)/playbackSpeed);
+                std::cout << "timesToPlayAt.back() = " << timesToPlayAt.back() + fabs(tsThis - tsPrev) / playbackSpeed << std::endl;
             }
         }
 
@@ -461,6 +462,7 @@ int main( int argc, char** argv )
                 gettimeofday(&tv_start, NULL);
                 started = clock();
                 sInitializerOffset = timesToPlayAt[ii];
+                std::cout << "sInitializerOffset = " << sInitializerOffset << std::endl;
             }
 
             int i = idsToPlay[ii];
@@ -556,7 +558,7 @@ int main( int argc, char** argv )
         gettimeofday(&tv_end, NULL);
 
 
-        fullSystem->printResult("/home/jiatianwu/project/sdso/result.txt");
+//        fullSystem->printResult("result.txt");
 
 
         int numFramesProcessed = abs(idsToPlay[0]-idsToPlay.back());
@@ -585,6 +587,16 @@ int main( int argc, char** argv )
             tmlog.flush();
             tmlog.close();
         }
+
+        // Added by Yo Han.
+        // https://github.com/Neoplanetz/dso_with_saving_pcl/blob/master/src/main_dso_pangolin.cpp
+        if (!isPCLfileClose) {
+            ((IOWrap::SampleOutputWrapper *) fullSystem->outputWrapper[1])->pclFile.flush();
+            ((IOWrap::SampleOutputWrapper *) fullSystem->outputWrapper[1])->pclFile.close();
+            isPCLfileClose = true;
+            printf("pcl tmp file is auto closed.\n");
+        }
+
 
     });
 

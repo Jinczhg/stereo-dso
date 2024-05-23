@@ -254,11 +254,11 @@ private:
 			char buf[1000];
 			tr.getline(buf, 1000);
 
-			int id;
+            char id[100];
 			double stamp;
 			float exposure = 0;
 
-			if(3 == sscanf(buf, "%d %lf %f", &id, &stamp, &exposure))
+            if (3 == sscanf(buf, "%s %lf %f", id, &stamp, &exposure))
 			{
 				timestamps.push_back(stamp);
 				exposures.push_back(exposure);

@@ -134,6 +134,8 @@ void FrameHessian::makeImages(float* color, CalibHessian* HCalib)
 		absSquaredGrad[i] = new float[wG[i]*hG[i]];
 	}
 	dI = dIp[0];
+    col = wG[0];
+    row = hG[0];
 
 
 	// make d0

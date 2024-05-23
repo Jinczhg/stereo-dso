@@ -31,6 +31,8 @@
 #include "util/settings.h"
 #include "OptimizationBackend/MatrixAccumulators.h"
 #include "IOWrapper/Output3DWrapper.h"
+#include <deque>
+#include "boost/thread.hpp"
 
 
 
@@ -80,7 +82,9 @@ public:
 	int w[PYR_LEVELS];
 	int h[PYR_LEVELS];
 
-    void debugPlotIDepthMap(float* minID, float* maxID, std::vector<IOWrap::Output3DWrapper*> &wraps);
+    // JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+    void debugPlotIDepthMap(FrameHessian *fh, float *minID, float *maxID, std::vector<IOWrap::Output3DWrapper *> &wraps);
+
     void debugPlotIDepthMapFloat(std::vector<IOWrap::Output3DWrapper*> &wraps);
 
 
@@ -105,6 +109,12 @@ private:
 	Vec6 calcRes(int lvl, SE3 refToNew, AffLight aff_g2l, float cutoffTH);
 	void calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l);
 	void calcGS(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l);
+
+    // timing
+    void reportKeyframeTime(FrameHessian *fh);
+    std::deque<float> lastNMappingMs;
+    struct timeval last_map;
+    boost::mutex mappingTimingMutex;
 
 	// pc buffers
 	float* pc_u[PYR_LEVELS];

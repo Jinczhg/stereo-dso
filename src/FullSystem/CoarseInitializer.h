@@ -30,6 +30,8 @@
 #include "util/settings.h"
 #include "vector"
 #include <math.h>
+#include <deque>
+#include "boost/thread.hpp"
 
 
 
@@ -162,8 +164,15 @@ private:
 
 	void makeGradients(Eigen::Vector3f** data);
 
-    void debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*> &wraps);
+    // JZ modifications: added framehessian as an argument to access the frame ID of the current keyframe
+    void debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*> &wraps, FrameHessian *fh);
 	void makeNN();
+
+    // timing
+    void reportKeyframeTime(FrameHessian *fh);
+    std::deque<float> lastNMappingMs;
+    struct timeval last_map;
+    boost::mutex mappingTimingMutex;
 };
 
 

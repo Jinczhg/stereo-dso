@@ -204,7 +204,14 @@ extern int staticPattern[10][40][2];
 extern int staticPatternNum[10];
 extern int staticPatternPadding[10];
 
-
+// Added By Yo Han.
+// https://github.com/Neoplanetz/dso_with_saving_pcl/blob/master/src/util/settings.h
+extern bool isSavePCL;
+extern bool isPCLfileClose;
+extern int numPCL;
+extern std::string strTmpFileName;
+extern std::string strSaveFileName;
+extern bool isWritePCL;
 
 
 //#define patternNum staticPatternNum[setting_pattern]
